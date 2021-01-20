@@ -16,6 +16,10 @@
 
   networking.hostName = "blueberry"; # Define your hostname.
   networking.networkmanager.enable = true;
+  networking.extraHosts =
+  ''
+    45.79.86.75 nextcloud.sidequestboy.com
+  '';
 
   # Set your time zone.
   time.timeZone = "America/Vancouver";
@@ -44,24 +48,55 @@
     keyMap = "dvorak";
   };
 
-  
+  services = {
+    upower.enable = true;
 
-  # Configure keymap in X11
-  services.xserver.layout = "us,us";
-  services.xserver.xkbModel = "pc104";
-  services.xserver.xkbVariant = "dvorak,";
-  services.xserver.xkbOptions = "grp:shifts_toggle,altwin:swap_alt_win";
+    dbus = {
+      enable = true;
+      socketActivated = true;
+    };
 
-  # Enable CUPS to print documents.
-  # services.printing.enable = true;
+    blueman.enable = true;
+
+    picom = {
+      enable = true;
+      fade = true;
+      inactiveOpacity = 0.9;
+      shadow = true;
+      fadeDelta = 4;
+    };
+
+    openssh.enable = true;
+
+    xserver = {
+      enable = true;
+
+      startDbusSession = true;
+
+      layout = "us,us";
+      xkbModel = "pc104";
+      xkbVariant = "dvorak,";
+      xkbOptions = "grp:shifts_toggle,altwin:swap_alt_win";
+
+      libinput = {
+        enable = true;
+        naturalScrolling = true;
+      }; 
+
+      displayManager.defaultSession = "none+xmonad";
+
+      windowManager.xmonad = {
+        enable = true;
+        enableContribAndExtras = true;
+      };
+    };
+  };
 
   # Enable sound.
   sound.enable = true;
   hardware.pulseaudio.enable = true;
 
-  # Enable touchpad support (enabled default in most desktopManager).
-  services.xserver.libinput.enable = true;
-  services.xserver.libinput.naturalScrolling = true;
+  hardware.bluetooth.enable = true;
 
   programs.zsh.enable = true;
 
@@ -75,6 +110,8 @@
   # List packages installed in system profile. To search, run:
   # $ nix search wget
   environment.systemPackages = with pkgs; [
+    entr
+    jq
     wget vim
     firefox
     chromium
@@ -89,6 +126,8 @@
     polybar
     brightnessctl
     keepassxc
+    vdirsyncer
+    nitrogen
   ];
 
   # Some programs need SUID wrappers, can be configured further or are
@@ -99,27 +138,6 @@
   #   enableSSHSupport = true;
   # };
 
-  # List services that you want to enable:
-
-  services.xserver.enable = true;
-  services.xserver.windowManager.bspwm.enable = true;
-
-  #services.xserver.videoDrivers = [ "intel" ];
-  #services.xserver.deviceSection = ''
-  #  Option "DRI" "2"
-  #  Option "TearFree" "true"
-  #'';
-
-  services.picom = {
-    enable = true;
-    fade = true;
-    inactiveOpacity = 0.9;
-    shadow = true;
-    fadeDelta = 4;
-  };
-
-  # Enable the OpenSSH daemon.
-  services.openssh.enable = true;
 
   # Open ports in the firewall.
   # networking.firewall.allowedTCPPorts = [ ... ];
