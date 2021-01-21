@@ -62,6 +62,9 @@ vim /mnt/etc/nixos/configuration.nix
 nix-env -f '<nixpkgs>' -iA git
 ```
 
+```
+nixos install
+```
 
 
 
