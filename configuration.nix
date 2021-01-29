@@ -5,16 +5,28 @@
 { config, pkgs, ... }:
 
 {
+
+  nixpkgs.config.allowUnfree = true;
+
   imports =
     [ # Include the results of the hardware scan.
       ./hardware-configuration.nix
     ];
 
-  # Use the systemd-boot EFI boot loader.
-  boot.loader.systemd-boot.enable = true;
-  boot.loader.efi.canTouchEfiVariables = true;
+  boot.loader = {
+    efi = {
+      canTouchEfiVariables = true;
+      efiSysMountPoint = "/boot";
+    };
+    grub = {
+      devices = [ "nodev" ];
+      efiSupport = true;
+      enable = true;
+      version = 2;
+    };
+  };
 
-  networking.hostName = "blueberry"; # Define your hostname.
+  networking.hostName = "viper"; # Define your hostname.
   networking.networkmanager.enable = true;
   networking.extraHosts =
   ''
@@ -28,7 +40,7 @@
   # Per-interface useDHCP will be mandatory in the future, so this generated config
   # replicates the default behaviour.
   networking.useDHCP = false;
-  networking.interfaces.wlp1s0.useDHCP = true;
+  networking.interfaces.wlp2s0.useDHCP = true;
 
   # Configure network proxy if necessary
   # networking.proxy.default = "http://user:password@proxy:port/";
@@ -81,6 +93,7 @@
       libinput = {
         enable = true;
         naturalScrolling = true;
+        additionalOptions = ''MatchIsTouchpad "on"'';
       }; 
 
       displayManager.defaultSession = "none+xmonad";
@@ -110,6 +123,19 @@
   # List packages installed in system profile. To search, run:
   # $ nix search wget
   environment.systemPackages = with pkgs; [
+    discord
+    picocom
+    dos2unix
+    unzip
+    python38
+    python38Packages.pip
+    usbutils
+    libinput
+    spotify
+    xorg.xev
+    vdirsyncer
+    todoman
+    nix-index
     entr
     jq
     wget vim
@@ -128,6 +154,7 @@
     keepassxc
     vdirsyncer
     nitrogen
+    xmobar
   ];
 
   # Some programs need SUID wrappers, can be configured further or are
