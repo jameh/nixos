@@ -6,32 +6,35 @@
 
 {
 
+  #boot.kernelPackages = pkgs.linuxPackages_latest;
+  boot.extraModulePackages = with config.boot.kernelPackages; [ v4l2loopback acpi_call ];
+
   nixpkgs.config.allowUnfree = true;
+  nixpkgs.overlays = import ./overlays;
 
   imports =
     [ # Include the results of the hardware scan.
+      <musnix>
       ./hardware-configuration.nix
+      ./machine/current.nix
     ];
 
-  boot.loader = {
-    efi = {
-      canTouchEfiVariables = true;
-      efiSysMountPoint = "/boot";
-    };
-    grub = {
-      devices = [ "nodev" ];
-      efiSupport = true;
-      enable = true;
-      version = 2;
-    };
-  };
+  services.udev.extraRules = ''
+    SUBSYSTEM=="usb",ATTR{idVendor}=="2982",ATTR{idProduct}=="1967",MODE="0660",GROUP="audio"
+  '';
+
+  musnix.enable = true;
+  musnix.kernel.optimize = true;
+  musnix.kernel.realtime = true;
+  musnix.kernel.packages = pkgs.linuxPackages_latest_rt;
 
   networking.hostName = "viper"; # Define your hostname.
   networking.networkmanager.enable = true;
-  networking.extraHosts =
-  ''
-    45.79.86.75 nextcloud.sidequestboy.com
-  '';
+  #networking.extraHosts =
+  #''
+  #  45.79.86.75 nextcloud.sidequestboy.com
+  #'';
+  networking.nameservers = [ "1.1.1.1" ];
 
   # Set your time zone.
   time.timeZone = "America/Vancouver";
@@ -57,7 +60,7 @@
   i18n.defaultLocale = "en_US.UTF-8";
   console = {
     font = "Lat2-Terminus16";
-    keyMap = "dvorak";
+    useXkbConfig = true;
   };
 
   services = {
@@ -65,7 +68,6 @@
 
     dbus = {
       enable = true;
-      socketActivated = true;
     };
 
     blueman.enable = true;
@@ -83,78 +85,121 @@
     xserver = {
       enable = true;
 
-      startDbusSession = true;
+      exportConfiguration = true;
 
       layout = "us,us";
       xkbModel = "pc104";
       xkbVariant = "dvorak,";
-      xkbOptions = "grp:shifts_toggle,altwin:swap_alt_win";
+      xkbOptions = "altwin:swap_alt_win,shift:both_capslock";
 
       libinput = {
         enable = true;
-        naturalScrolling = true;
-        additionalOptions = ''MatchIsTouchpad "on"'';
+        touchpad.naturalScrolling = true;
+        touchpad.additionalOptions = ''MatchIsTouchpad "on"'';
       }; 
 
-      displayManager.defaultSession = "none+xmonad";
+      #displayManager.defaultSession = "none+xmonad";
+      displayManager.gdm.enable = true;
+      displayManager.gdm.wayland = false;
+      desktopManager.gnome3.enable = true;
 
-      windowManager.xmonad = {
-        enable = true;
-        enableContribAndExtras = true;
-      };
+      #windowManager.xmonad = {
+      #  enable = true;
+      #  enableContribAndExtras = true;
+      #};
+
+    };
+
+    interception-tools = {
+      enable = true;
     };
   };
 
   # Enable sound.
   sound.enable = true;
   hardware.pulseaudio.enable = true;
+  hardware.pulseaudio.package = pkgs.pulseaudio.override { jackaudioSupport = true; };
 
   hardware.bluetooth.enable = true;
 
   programs.zsh.enable = true;
+  programs.adb.enable = true;
 
   # Define a user account. Don't forget to set a password with ‘passwd’.
   users.defaultUserShell = pkgs.zsh;
   users.users.jamie = {
     isNormalUser = true;
-    extraGroups = [ "wheel" "networkmanager" ];
+    extraGroups = [ "wheel" "networkmanager" "tty" "dialout" "audio" "adbusers" "vboxusers" ];
   };
+
+  services.udev.packages = with pkgs; [ gnome3.gnome-settings-daemon ];
+
+  programs.steam.enable = true;
+
+  #virtualisation.virtualbox.host.enable = true;
+  #virtualisation.virtualbox.host.enableExtensionPack = true;
 
   # List packages installed in system profile. To search, run:
   # $ nix search wget
   environment.systemPackages = with pkgs; [
+    #freecad
+    eudev
+    gcc
+    gnumake
+    nodejs
+    pomodoro-new
+    zoom-us
+    yabridge
+    vscode
+    droidcam
+    obs-studio
+    wine-staging
+    winetricks
+    amdvlk
+    vulkan-tools
+    steamcmd
+    jack2
+    qjackctl
+    bitwig-studio3
+    vlc
+    etcher
+    transmission-gtk
+    gnome3.adwaita-icon-theme
+    ripgrep
+    alacritty
+    arandr
+    brightnessctl
+    chromium
     discord
-    picocom
     dos2unix
-    unzip
+    efibootmgr
+    entr
+    firefox
+    git
+    home-manager
+    jq
+    keepassxc
+    libinput
+    neovim
+    nitrogen
+    nix-index
+    picocom
+    polybar
     python38
     python38Packages.pip
-    usbutils
-    libinput
-    spotify
-    xorg.xev
-    vdirsyncer
-    todoman
-    nix-index
-    entr
-    jq
-    wget vim
-    firefox
-    chromium
-    git
-    alacritty
-    tmux
-    zsh
-    zplug
-    neovim
     rofi
-    arandr
-    polybar
-    brightnessctl
-    keepassxc
+    spotify
+    tmux
+    #todoman
+    unzip
+    usbutils
     vdirsyncer
-    nitrogen
+    vdirsyncer
+    wget vim
     xmobar
+    xorg.xev
+    zplug
+    zsh
   ];
 
   # Some programs need SUID wrappers, can be configured further or are
