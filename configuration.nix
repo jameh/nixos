@@ -143,6 +143,9 @@
   # $ nix search wget
   environment.systemPackages = with pkgs; [
     #freecad
+    ntfs3g
+    woeusb
+    fritzing
     eudev
     gcc
     gnumake
