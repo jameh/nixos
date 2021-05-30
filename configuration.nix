@@ -5,36 +5,24 @@
 { config, pkgs, ... }:
 
 {
-
-  #boot.kernelPackages = pkgs.linuxPackages_latest;
-  boot.extraModulePackages = with config.boot.kernelPackages; [ v4l2loopback acpi_call ];
-
-  nixpkgs.config.allowUnfree = true;
-  nixpkgs.overlays = import ./overlays;
-
   imports =
     [ # Include the results of the hardware scan.
-      <musnix>
       ./hardware-configuration.nix
-      ./machine/current.nix
+      ./wm/xmonad.nix
     ];
 
-  services.udev.extraRules = ''
-    SUBSYSTEM=="usb",ATTR{idVendor}=="2982",ATTR{idProduct}=="1967",MODE="0660",GROUP="audio"
-  '';
+  # Use the GRUB 2 boot loader.
+  boot.loader.grub.enable = true;
+  boot.loader.grub.version = 2;
+  # boot.loader.grub.efiSupport = true;
+  # boot.loader.grub.efiInstallAsRemovable = true;
+  # boot.loader.efi.efiSysMountPoint = "/boot/efi";
+  # Define on which hard drive you want to install Grub.
+  boot.loader.grub.device = "/dev/sda"; # or "nodev" for efi only
 
-  musnix.enable = true;
-  musnix.kernel.optimize = true;
-  musnix.kernel.realtime = true;
-  musnix.kernel.packages = pkgs.linuxPackages_latest_rt;
+  virtualisation.virtualbox.guest.enable = true;
 
-  networking.hostName = "viper"; # Define your hostname.
-  networking.networkmanager.enable = true;
-  #networking.extraHosts =
-  #''
-  #  45.79.86.75 nextcloud.sidequestboy.com
-  #'';
-  networking.nameservers = [ "1.1.1.1" ];
+  networking.hostName = "viper-nixos"; # Define your hostname.
 
   # Set your time zone.
   time.timeZone = "America/Vancouver";
@@ -43,18 +31,11 @@
   # Per-interface useDHCP will be mandatory in the future, so this generated config
   # replicates the default behaviour.
   networking.useDHCP = false;
-  networking.interfaces.wlp2s0.useDHCP = true;
+  networking.interfaces.enp0s3.useDHCP = true;
 
   # Configure network proxy if necessary
   # networking.proxy.default = "http://user:password@proxy:port/";
   # networking.proxy.noProxy = "127.0.0.1,localhost,internal.domain";
-
-  fonts.fonts = with pkgs; [
-    (nerdfonts.override { fonts = [ "FiraCode" "DroidSansMono" ]; })
-    noto-fonts
-    noto-fonts-cjk
-    noto-fonts-emoji
-  ];
 
   # Select internationalisation properties.
   i18n.defaultLocale = "en_US.UTF-8";
@@ -63,146 +44,63 @@
     useXkbConfig = true;
   };
 
-  services = {
-    upower.enable = true;
+  # Enable the X11 windowing system.
+  #services.xserver.enable = true;
+  #services.xserver.displayManager.sddm.enable = true;
+  #services.xserver.desktopManager.plasma5.enable = true;
+  #services.xserver.displayManager.gdm.enable = true;
+  #services.xserver.desktopManager.gnome.enable = true;
 
-    dbus = {
-      enable = true;
-    };
 
-    blueman.enable = true;
+  
 
-    picom = {
-      enable = true;
-      fade = true;
-      inactiveOpacity = 0.9;
-      shadow = true;
-      fadeDelta = 4;
-    };
+  # Configure keymap in X11
+  # services.xserver.layout = "us";
+  # services.xserver.xkbOptions = "eurosign:e";
 
-    openssh.enable = true;
-
-    xserver = {
-      enable = true;
-
-      exportConfiguration = true;
-
-      layout = "us,us";
-      xkbModel = "pc104";
-      xkbVariant = "dvorak,";
-      xkbOptions = "altwin:swap_alt_win,shift:both_capslock";
-
-      libinput = {
-        enable = true;
-        touchpad.naturalScrolling = true;
-        touchpad.additionalOptions = ''MatchIsTouchpad "on"'';
-      }; 
-
-      #displayManager.defaultSession = "none+xmonad";
-      displayManager.gdm.enable = true;
-      displayManager.gdm.wayland = false;
-      desktopManager.gnome3.enable = true;
-
-      #windowManager.xmonad = {
-      #  enable = true;
-      #  enableContribAndExtras = true;
-      #};
-
-    };
-
-    interception-tools = {
-      enable = true;
-    };
-  };
+  # Enable CUPS to print documents.
+  # services.printing.enable = true;
 
   # Enable sound.
   sound.enable = true;
   hardware.pulseaudio.enable = true;
-  hardware.pulseaudio.package = pkgs.pulseaudio.override { jackaudioSupport = true; };
 
-  hardware.bluetooth.enable = true;
-
-  programs.zsh.enable = true;
-  programs.adb.enable = true;
+  # Enable touchpad support (enabled default in most desktopManager).
+  # services.xserver.libinput.enable = true;
 
   # Define a user account. Don't forget to set a password with ‘passwd’.
-  users.defaultUserShell = pkgs.zsh;
   users.users.jamie = {
     isNormalUser = true;
-    extraGroups = [ "wheel" "networkmanager" "tty" "dialout" "audio" "adbusers" "vboxusers" ];
+    extraGroups = [ "wheel" ]; # Enable ‘sudo’ for the user.
   };
 
-  services.udev.packages = with pkgs; [ gnome3.gnome-settings-daemon ];
-
-  programs.steam.enable = true;
-
-  #virtualisation.virtualbox.host.enable = true;
-  #virtualisation.virtualbox.host.enableExtensionPack = true;
+  fonts.fonts = with pkgs; [
+    (nerdfonts.override { fonts = [ "FiraCode" "DroidSansMono" ]; })
+    noto-fonts
+    noto-fonts-cjk
+    noto-fonts-emoji
+  ];
 
   # List packages installed in system profile. To search, run:
   # $ nix search wget
   environment.systemPackages = with pkgs; [
-    #freecad
-    ntfs3g
-    woeusb
-    fritzing
-    eudev
-    gcc
-    gnumake
-    nodejs
-    pomodoro-new
-    zoom-us
-    yabridge
-    vscode
-    droidcam
-    obs-studio
-    wine-staging
-    winetricks
-    amdvlk
-    vulkan-tools
-    steamcmd
-    jack2
-    qjackctl
-    bitwig-studio3
-    vlc
-    etcher
-    transmission-gtk
-    gnome3.adwaita-icon-theme
-    ripgrep
-    alacritty
-    arandr
-    brightnessctl
+    wget vim neovim
     chromium
-    discord
-    dos2unix
-    efibootmgr
-    entr
-    firefox
-    git
-    home-manager
-    jq
-    keepassxc
-    libinput
-    neovim
-    nitrogen
-    nix-index
-    picocom
-    polybar
+    zsh
+    tmux
+    alacritty
+    zplug
     python38
     python38Packages.pip
-    rofi
-    spotify
-    tmux
-    #todoman
-    unzip
-    usbutils
-    vdirsyncer
-    vdirsyncer
-    wget vim
-    xmobar
-    xorg.xev
-    zplug
-    zsh
+    polybar
+    picocom
+    nix-index
+    libinput
+    keepassxc
+    jq
+    home-manager
+    git
+    ripgrep
   ];
 
   # Some programs need SUID wrappers, can be configured further or are
@@ -213,12 +111,16 @@
   #   enableSSHSupport = true;
   # };
 
+  # List services that you want to enable:
+
+  # Enable the OpenSSH daemon.
+  # services.openssh.enable = true;
 
   # Open ports in the firewall.
   # networking.firewall.allowedTCPPorts = [ ... ];
   # networking.firewall.allowedUDPPorts = [ ... ];
   # Or disable the firewall altogether.
-  networking.firewall.enable = false;
+  # networking.firewall.enable = false;
 
   # This value determines the NixOS release from which the default
   # settings for stateful data, like file locations and database versions
